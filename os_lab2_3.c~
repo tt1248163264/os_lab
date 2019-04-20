@@ -1,0 +1,124 @@
+#include<stdio.h>
+#include<string.h>
+#include<unistd.h>
+
+int main(){
+    char cmdline[256];
+    while(1){
+        int i,j,k;
+        int x=0,y=0,z=0;
+        int len;
+        int cmd_num;
+        char cmd[10][10][10];
+        int sub_num[10];
+        printf("OSLab2->");
+        i=0;
+        while(i < 256){
+            cmdline[i]=0;
+            i++;
+        }
+        i=0;j=0;k=0;
+        while(i<10){
+            while(j<10){
+                while(k<10){
+                    cmd[i][j][k] = 0;
+                    k++;}
+                j++;}
+            i++;
+        }
+        //read cmd
+        gets(cmdline);
+        len = strlen(cmdline);
+        //sub cmd
+        i=0;
+        while(i<len){
+            if(cmdline[i]==';')cmdline[i]=0;
+            i++;
+        }
+        i=0;j=0;k=0;
+        while(i<len){
+            char stemp[256];
+            int itemp=0,len_temp;
+            while(cmdline[i]==0 && i<len)i++;
+            if(i >= len)break;
+            while(itemp < 256){stemp[itemp]=0;itemp++;}
+            strcpy(stemp,cmdline+i);
+            len_temp = strlen(stemp);
+            i += len_temp;
+            
+            j=0;
+            while(j<len_temp){
+                if(stemp[j]==32)stemp[j]=0;
+                j++;
+            }
+            j=0;y=0;
+            while(j<len_temp){
+                while(stemp[j]==0 && j < len_temp)j++;
+                if(j >= len_temp)break;
+                strcpy(cmd[x][y],stemp+j);
+                j+=strlen(cmd[x][y]);
+                y++;
+            }
+            sub_num[x] = y;
+            x++;
+        }
+        cmd_num = x;
+        
+        
+        i=0;
+        while(i<cmd_num){
+            j=0;
+            x=0;//as flag
+            while(j<sub_num[i]){
+                if(cmd[i][j][0] == '|'){ x=1;break;}
+                j++;
+            }
+            
+            if(x){
+                //pipe
+                char cmd_left[200] = {0,};
+                char cmd_right[200] = {0,};
+                k=0;
+                while(k<j){
+                    strcat(cmd_left,cmd[i][k]);
+                    //cmd_temp[strlen(cmd_temp)] = ' ';
+                    strcat(cmd_left," ");
+                    k++;
+                }
+                k=j+1;
+                while(k<sub_num[i]){
+                    strcat(cmd_right,cmd[i][k]);
+                    //cmd_temp[strlen(cmd_temp)] = ' ';
+                    strcat(cmd_right," ");
+                    k++;
+                }
+                pid_t pipe_child_pid = fork();
+                if(pipe_child_pid == 0){
+                    //child process
+                    char buf[200];
+                    FILE *fr = popen(cmd_left,"r");
+                    fread(buf,sizeof(char),sizeof(buf),fr);
+                    FILE *fw = popen(cmd_right,"w");
+                    fputs(buf,fw);
+                    pclose(fr);
+                    pclose(fw);
+                    exit(0);
+                }else{
+                    //super process
+                    int status;
+                    status = waitpid(pipe_child_pid,&status,0);
+                }
+            }else{
+                //none pipe
+            }
+            i++;
+        }
+        
+        
+        //start exec;
+        //char *argv[3] = {cmd[0][0],cmd[0][1],NULL};
+        //char *argv[4] = {"ls","-l","/",NULL};
+        //execvp(argv[0],argv);
+    }
+    
+}
